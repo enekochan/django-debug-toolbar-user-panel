@@ -54,18 +54,18 @@ File a bug
 from django import VERSION
 from django.conf import settings
 from django.http import HttpResponseForbidden
-from django.conf.urls import url
+from django.urls import re_path
 from django.template.loader import render_to_string
-from django.utils.translation import ugettext_lazy as _
+from django.utils.translation import gettext_lazy as _
 
 from django.contrib.auth import get_user_model
 
-from debug_toolbar.panels import DebugPanel
+from debug_toolbar.panels import Panel
 
 from . import views
 from .forms import UserForm
 
-class UserPanel(DebugPanel):
+class UserPanel(Panel):
     """
     Panel that allows you to login as other recently-logged in users.
     """
@@ -118,7 +118,11 @@ class UserPanel(DebugPanel):
         if VERSION >= (1, 10):
             # Django 1.10 onwards `is_authenticated` is a property
             return request.user.is_authenticated
-        return request.user.is_authenticated()
+        return request.user.is_authenticated
+
+    def process_request(self, request):
+        self.request = request
+        return super().process_request(request)
 
     def process_response(self, request, response):
         self.request = request
@@ -126,10 +130,10 @@ class UserPanel(DebugPanel):
     @classmethod
     def get_urls(cls):
         return (
-            url(r'^users/login/$', views.login_form,
+            re_path(r'^users/login/$', views.login_form,
                 name='debug-userpanel-login-form'),
-            url(r'^users/login/(?P<pk>-?\d+)$', views.login,
+            re_path(r'^users/login/(?P<pk>-?\d+)$', views.login,
                 name='debug-userpanel-login'),
-            url(r'^users/logout$', views.logout,
+            re_path(r'^users/logout$', views.logout,
                 name='debug-userpanel-logout'),
         )
